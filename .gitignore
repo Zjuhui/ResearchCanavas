@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.research-canvas/
+*.vsix
+artifacts/
+.env
+plugins/research-canvas/server/
+plugins/research-canvas/web/
+plugins/research-canvas/DEPENDENCIES.json
+plugins/research-canvas/THIRD_PARTY_NOTICES.txt

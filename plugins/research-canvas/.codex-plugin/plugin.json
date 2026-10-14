@@ -1,0 +1,29 @@
+{
+  "name": "research-canvas",
+  "version": "0.2.0",
+  "description": "Read local research modules, inputs, conditions, proposals and code mappings from Research Canvas.",
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "author": {
+    "name": "Research Canvas contributors"
+  },
+  "license": "MIT",
+  "requires_local_executor": true,
+  "extensions": {
+    "com.openai": {
+      "onboardingSkill": "./skills/research-canvas/SKILL.md"
+    }
+  },
+  "interface": {
+    "displayName": "Research Canvas",
+    "shortDescription": "Discuss local research designs with Codex",
+    "longDescription": "Read saved modules from an explicitly selected workspace. Includes a local research design canvas; does not synchronize chat history.",
+    "developerName": "Research Canvas contributors",
+    "category": "Productivity",
+    "capabilities": [
+      "Read saved module designs",
+      "Start a local research canvas"
+    ],
+    "brandColor": "#205D47"
+  }
+}

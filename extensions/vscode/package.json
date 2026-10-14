@@ -1,0 +1,35 @@
+{
+  "name": "research-canvas",
+  "displayName": "Research Canvas",
+  "description": "Open the local Research Canvas and navigate its code mappings.",
+  "version": "0.2.0",
+  "publisher": "research-canvas",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Zjuhui/ResearchCanavas.git"
+  },
+  "engines": { "vscode": "^1.95.0" },
+  "categories": ["Other"],
+  "main": "./extension.cjs",
+  "activationEvents": ["onUri"],
+  "extensionKind": ["workspace"],
+  "capabilities": { "untrustedWorkspaces": { "supported": false } },
+  "contributes": {
+    "commands": [
+      { "command": "researchCanvas.open", "title": "Research Canvas: 打开画布" },
+      { "command": "researchCanvas.openMappedFile", "title": "Research Canvas: 打开关联代码文件" },
+      { "command": "researchCanvas.copyModuleContext", "title": "Research Canvas: 复制模块上下文" }
+    ],
+    "configuration": {
+      "title": "Research Canvas",
+      "properties": {
+        "researchCanvas.url": {
+          "type": "string", "default": "http://127.0.0.1:3177",
+          "scope": "machine",
+          "description": "本机 Research Canvas 服务地址，仅支持 localhost / 127.0.0.1 / [::1]。"
+        }
+      }
+    }
+  }
+}

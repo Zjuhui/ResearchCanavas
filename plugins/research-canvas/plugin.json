@@ -1,0 +1,36 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "research-canvas",
+  "version": "0.2.0",
+  "description": "Design research modules on a local canvas and discuss saved modules, interface bindings, sources, proposals and code mappings with Codex.",
+  "author": {
+    "name": "Research Canvas contributors"
+  },
+  "license": "MIT",
+  "keywords": [
+    "research",
+    "canvas",
+    "code-design"
+  ],
+  "extensions": {
+    "com.openai": {
+      "requires_local_executor": true,
+      "onboardingSkill": "./skills/research-canvas/SKILL.md",
+      "interface": {
+        "displayName": "Research Canvas",
+        "shortDescription": "Discuss local research designs with Codex",
+        "longDescription": "Read saved modules from a workspace you explicitly select. Includes a three-layer local design canvas, natural-language flow conditions, interface bindings and shared code mappings. Runs locally with Node.js; does not synchronize chat history.",
+        "developerName": "Research Canvas contributors",
+        "category": "Productivity",
+        "capabilities": [
+          "Read saved module designs",
+          "Start a local research canvas"
+        ],
+        "defaultPrompt": [
+          "读取 Research Canvas 中已选择的模块，和我讨论设计、输入输出及实现方案。"
+        ],
+        "brandColor": "#205D47"
+      }
+    }
+  }
+}

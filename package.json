@@ -1,0 +1,49 @@
+{
+  "name": "research-canvas",
+  "version": "0.2.0",
+  "license": "MIT",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Zjuhui/ResearchCanavas.git"
+  },
+  "description": "Local research design canvas connected to code and Codex",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "tsx server/index.ts --dev",
+    "build": "tsc --noEmit && vite build && node scripts/build-integrations.mjs",
+    "start": "tsx server/index.ts",
+    "test": "node scripts/test.mjs",
+    "test:extension": "node --test extensions/vscode/test/extension.test.cjs",
+    "test:ui": "node scripts/browser-check.mjs",
+    "test:release": "node scripts/release-check.mjs",
+    "test:plugin-install": "node --import tsx scripts/check-plugin-install.ts --run",
+    "mcp": "tsx integrations/mcp.ts",
+    "release": "node scripts/release.mjs",
+    "check": "npm run test && npm run test:extension && npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "@xyflow/react": "^12.9.0",
+    "proper-lockfile": "^4.1.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "4.0.0",
+    "@types/node": "^22.0.0",
+    "@types/proper-lockfile": "^4.1.4",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "esbuild": "^0.28.2",
+    "playwright": "^1.64.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0",
+    "vite": "^6.4.0"
+  }
+}

@@ -47,7 +47,7 @@ await writeFile(path.join(destination, 'FILE_INVENTORY.json'), JSON.stringify(in
 // The repository archive contains source only. Exact roots and extension files
 // are allowlisted so a user's canvas records and local diagnostics never enter it.
 const source = [];
-for (const name of ['package.json', 'package-lock.json', 'tsconfig.json', 'vite.config.ts', 'index.html', 'README.md', 'LICENSE', 'AGENTS.md', '.gitignore']) {
+for (const name of ['package.json', 'package-lock.json', 'tsconfig.json', 'vite.config.ts', 'index.html', 'README.md', 'README.zh-CN.md', 'LICENSE', 'AGENTS.md', '.gitignore']) {
   source.push({ name, data: await readFile(path.join(root, name)) });
 }
 for (const directory of ['src', 'server', 'integrations', 'tests', 'scripts', 'docs']) {

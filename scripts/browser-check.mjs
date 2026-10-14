@@ -1,17 +1,44 @@
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, realpath, writeFile } from 'node:fs/promises';
+import { createServer } from 'node:net';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 await mkdir('artifacts',{recursive:true});
-const workspace=await mkdtemp(path.resolve('artifacts','browser-workspace-'));
+const workspace=await mkdtemp(path.join(tmpdir(),'research-canvas-browser-'));
 await mkdir(path.join(workspace,'src'));await writeFile(path.join(workspace,'src','shared.py'),'# Browser verification fixture\n');
-const port=3188,url=`http://127.0.0.1:${port}`;
+const port=await new Promise((resolve,reject)=>{
+ const reservation=createServer();
+ reservation.once('error',reject);
+ reservation.listen(0,'127.0.0.1',()=>{
+  const address=reservation.address();
+  if(!address||typeof address==='string'){reservation.close();reject(new Error('Could not reserve a local test port'));return;}
+  reservation.close(error=>error?reject(error):resolve(address.port));
+ });
+});
+const url=`http://127.0.0.1:${port}`;
 const server=spawn(process.execPath,['--import','tsx','server/index.ts','--workspace',workspace,'--port',String(port)],{stdio:['ignore','pipe','pipe'],windowsHide:true,shell:false});
+let serverError;
+server.on('error',error=>{serverError=error;});
 server.stderr.on('data',data=>process.stderr.write(data));
 let browser,page;
 try{
- for(let attempt=0;attempt<50;attempt++){try{if((await fetch(url+'/api/project')).ok)break}catch{}await new Promise(r=>setTimeout(r,200))}
+ let ready=false;
+ const expectedWorkspace=await realpath(workspace);
+ for(let attempt=0;attempt<50;attempt++){
+  if(serverError||server.exitCode!==null)throw serverError||new Error(`Test server exited before it was ready (${server.exitCode})`);
+  let response;
+  try{response=await fetch(url+'/api/project');}catch{}
+  if(response?.ok){
+   const actualWorkspace=(await response.json()).workspaceRoot;
+   const normalize=value=>process.platform==='win32'?path.normalize(value).toLowerCase():path.normalize(value);
+   assert.equal(normalize(actualWorkspace),normalize(expectedWorkspace),'Unexpected service on the browser test port');
+   ready=true;break;
+  }
+  await new Promise(r=>setTimeout(r,200));
+ }
+ if(!ready)throw new Error('Test server did not become ready');
  browser=await chromium.launch({headless:true,...(process.platform==='win32'?{channel:'msedge'}:{})});
  page=await browser.newPage({viewport:{width:1440,height:1000}});const errors=[];
  page.on('pageerror',error=>errors.push(error.message));page.on('dialog',dialog=>dialog.accept());
@@ -134,7 +161,8 @@ try{
  });
  await page.screenshot({path:'artifacts/app-overview.png',fullPage:true});
  await page.setViewportSize({width:390,height:844});
- await page.getByRole('button',{name:'关闭属性面板',exact:true}).click();
+ await page.reload();
+ await page.locator('.main-area.inspector-hidden').waitFor();
  await page.waitForFunction(()=>{
   const node=document.querySelector('.module-card')?.getBoundingClientRect();
   return node&&node.left>=0&&node.right<=innerWidth&&node.top>=0&&node.bottom<=innerHeight;
@@ -142,12 +170,29 @@ try{
  await page.screenshot({path:'artifacts/app-narrow.png',fullPage:true});
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
  await page.getByRole('button',{name:'切换属性面板',exact:true}).click();
+ await page.getByRole('button',{name:'关闭属性面板',exact:true}).click();
  await page.setViewportSize({width:1440,height:1000});
- await page.locator('.react-flow__pane').click({position:{x:5,y:5}});
+ await page.locator('.react-flow__pane').click({position:{x:180,y:60}});
  await page.getByRole('button',{name:'创建空白画布',exact:true}).click();
  await page.getByRole('button',{name:/或体验 A \/ B \/ C 示例/}).click();
  await page.getByRole('button',{name:'保存项目',exact:true}).click();await page.getByText('已保存到项目目录',{exact:true}).waitFor();
  const beforeExpansion=JSON.parse(await readFile(path.join(workspace,'.research-canvas','project.json'),'utf8'));
+ await page.setViewportSize({width:1280,height:720});
+ await page.reload();
+ await page.waitForFunction(()=>{
+  const canvas=document.querySelector('.canvas-area')?.getBoundingClientRect();
+  const cards=['a','b','c'].map(id=>document.querySelector(`.react-flow__node[data-id="${id}"]`)?.getBoundingClientRect());
+  return canvas&&cards.every(card=>card&&card.left>=canvas.left&&card.right<=canvas.right&&card.top>=canvas.top&&card.bottom<=canvas.bottom);
+ });
+ await page.screenshot({path:'artifacts/app-example-overview.png',fullPage:true});
+ const overviewZoom=await page.locator('.react-flow__viewport').evaluate(element=>new DOMMatrix(getComputedStyle(element).transform).a);
+ assert.ok(overviewZoom<1,'1280px overview should fit all three modules');
+ await page.locator('.react-flow__node[data-id="b"] h3').click();
+ await page.waitForFunction(()=>new DOMMatrix(getComputedStyle(document.querySelector('.react-flow__viewport')).transform).a>=.99);
+ assert.ok((await page.locator('.react-flow__node[data-id="b"]').boundingBox()).width>=260,'clicking a module should restore readable size');
+ await page.screenshot({path:'artifacts/app-example-focused.png',fullPage:true});
+ await page.getByRole('button',{name:'Fit View',exact:true}).click();
+ await page.setViewportSize({width:1440,height:1000});
  await page.locator('.react-flow__node[data-id="a"]').getByRole('button',{name:'展开内部画布',exact:true}).click();
  await page.waitForFunction(()=>{const group=document.querySelector('.expanded-module')?.getBoundingClientRect(),canvas=document.querySelector('.canvas-area')?.getBoundingClientRect();return group&&canvas&&group.right<=canvas.right&&group.bottom<=canvas.bottom;});
  const rootRects=await page.evaluate(()=>['a','b','c'].map(id=>{const r=document.querySelector(`.react-flow__node[data-id="${id}"]`).getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom}}));

@@ -43,8 +43,9 @@ await writeFile(path.join(plugin, 'DEPENDENCIES.json'), JSON.stringify(dependenc
 const marketplacePath=path.join(root,'.agents','plugins','marketplace.json');
 const marketplace=JSON.stringify({ name: 'research-canvas-local', interface: { displayName: 'Research Canvas 本地开发' }, plugins: [{ name: 'research-canvas', source: { source: 'local', path: './plugins/research-canvas' }, policy: { installation: 'AVAILABLE', authentication: 'ON_INSTALL' }, category: 'Productivity' }] }, null, 2)+'\n';
 const existingMarketplace=await readFile(marketplacePath,'utf8').catch(error=>{if(error.code==='ENOENT')return null;throw error});
-if(existingMarketplace!==marketplace){
-  if(existingMarketplace!==null)throw new Error('Existing repo marketplace differs; merge the Research Canvas entry manually to preserve its other plugins.');
+if(existingMarketplace===null){
   await mkdir(path.dirname(marketplacePath),{recursive:true});await writeFile(marketplacePath,marketplace);
+}else if(JSON.stringify(JSON.parse(existingMarketplace))!==JSON.stringify(JSON.parse(marketplace))){
+  throw new Error('Existing repo marketplace differs; merge the Research Canvas entry manually to preserve its other plugins.');
 }
 console.log(`Built portable Research Canvas ${project.version}: ${plugin}`);
